@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  langfuse:
+    image: ghcr.io/langfuse/langfuse:latest
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://myuser:mypassword@db:5432/mydatabase
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: mysecret
+      SALT: mysalt
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+  db:
+    image: ankane/pgvector:latest
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5433:5432"
