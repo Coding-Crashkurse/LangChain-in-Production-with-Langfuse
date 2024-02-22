@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
+from contextlib import asynccontextmanager
 
 load_dotenv()
 
@@ -86,7 +87,13 @@ chain = (
     | StrOutputParser()
 )
 
-app = FastAPI()
+
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 SECRET_KEY = "your_jwt_secret_key"
 
@@ -145,11 +152,6 @@ def get_trace_handler(
         )
     trace = langfuse.trace(user_id=user.username)
     return trace.get_langchain_handler()
-
-
-@app.on_event("startup")
-def on_startup():
-    Base.metadata.create_all(bind=engine)
 
 
 @app.post("/register", response_model=UserOut)
